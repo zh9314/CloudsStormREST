@@ -2,7 +2,9 @@ package basic;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -31,17 +33,75 @@ public class RESTRequest {
 			BufferedReader br = null;
 			
 			int repCode = conn.getResponseCode();
-			System.out.println(repCode);
-			if ( repCode >= 200 && repCode <= 299) 
-				br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			if ( repCode >= 200 && repCode <= 299) {
+				InputStream inputStream = conn.getInputStream();
+				if(inputStream != null)
+					br = new BufferedReader(new InputStreamReader(inputStream));
+				 
+			}
 			else {
-			    br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+				InputStream inputStream = conn.getErrorStream();
+				if(inputStream != null)
+					br = new BufferedReader(new InputStreamReader(inputStream));
 			    success = false;
 			}
 			
-			String line;
-			while ((line = br.readLine()) != null) 
-				output += line + "\n";
+			if(br != null){
+				String line;
+				while ((line = br.readLine()) != null) 
+					output += line + "\n";
+			}
+			
+			conn.disconnect();
+		}catch (IOException e){
+			e.printStackTrace();
+			System.out.println(e.getMessage());
+			return null;
+		}
+		if(success)
+			return output;
+		else
+			return null;
+	}
+	
+	
+	public static String postXML(String serverIP, int port, String urlPrefix, String xmlString) {
+		String output = "";
+		boolean success = true;
+		try {
+			String urlStr = "http://"+serverIP+":"+port+"/"+urlPrefix;
+			
+			URL url = new URL(urlStr);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "text/xml");
+			
+			OutputStream os = conn.getOutputStream();
+			os.write(xmlString.getBytes());
+			os.flush();
+
+			BufferedReader br = null;
+			
+			int repCode = conn.getResponseCode();
+			if ( repCode >= 200 && repCode <= 299) {
+				InputStream inputStream = conn.getInputStream();
+				if(inputStream != null)
+					br = new BufferedReader(new InputStreamReader(inputStream));
+				 
+			}
+			else {
+				InputStream inputStream = conn.getErrorStream();
+				if(inputStream != null)
+					br = new BufferedReader(new InputStreamReader(inputStream));
+			    success = false;
+			}
+			
+			if(br != null){
+				String line;
+				while ((line = br.readLine()) != null) 
+					output += line + "\n";
+			}
 			
 			conn.disconnect();
 		}catch (IOException e){
