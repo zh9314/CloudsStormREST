@@ -11,12 +11,11 @@ import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 
-import basic.CommonTool;
 import basic.RESTRequest;
 
 public class CtrlAgent {
 	
-	private static final String sysTmp = CommonTool.formatDirWithSep(System.getProperty("java.io.tmpdir"));
+	private static final String sysTmp = File.separator + "tmp" + File.separator;   ///currently only in Unix mode
 	
 	private boolean bug = false; 
 	
@@ -24,17 +23,20 @@ public class CtrlAgent {
 	
 	private String appID = "123";  ///default value
 	
+	private boolean logOn = true;
+	
 	private String objectType = null;
 	
 	private ArrayList<String> objects = null; 
+	
+	private ArrayList<String> cmds = null;
 	
 	public CtrlAgent init(String serverIP){
 		if(serverIP == null || serverIP.trim().equals("")){
 			bug = true;
 			return this;
 		}
-			
-		
+
 		this.serverIP = serverIP;
 		
 		if(testOnline())
@@ -51,17 +53,19 @@ public class CtrlAgent {
 			bug = true;
 			return this;
 		}
-		this.serverIP = null;
+		String rawServerIP = null;
 		try {
-			serverIP = FileUtils.readFileToString(ctrlInfoFile, "UTF-8");
+			rawServerIP = FileUtils.readFileToString(ctrlInfoFile, "UTF-8");
 		} catch (IOException e) {
 			e.printStackTrace();
 			bug = true;
 			return this;
 		}
 		
-		if(testOnline())
+		this.serverIP = rawServerIP.replace("\n", "").trim();
+		if(testOnline()){
 			return this;
+		}
 		else{
 			bug = true;
 			return this;
@@ -85,10 +89,22 @@ public class CtrlAgent {
 		
 	}
 	
+	public CtrlAgent setLog(boolean logOp){
+		this.logOn = logOp;
+		return this;
+	}
+	
 	public CtrlAgent addObjet(String obj){
 		if(objects == null)
 			objects = new ArrayList<String>();
 		objects.add(obj.trim());
+		return this;
+	}
+	
+	public CtrlAgent addCMD(String cmd){
+		if(cmds == null)
+			cmds = new ArrayList<String>();
+		cmds.add(cmd.trim());
 		return this;
 	}
 	
@@ -124,7 +140,10 @@ public class CtrlAgent {
 		for(int oi = 1 ; oi<this.objects.size() ; oi++)
 			objstr += ("||" + this.objects.get(oi));
 		objEle.addText(objstr);
+		
+		reset();
 		String xmlString = doc.asXML();
+		System.out.println(xmlString);
 		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/ctrl/provision", xmlString);
 	}
 	
@@ -148,8 +167,48 @@ public class CtrlAgent {
 		for(int oi = 1 ; oi<this.objects.size() ; oi++)
 			objstr += ("||" + this.objects.get(oi));
 		objEle.addText(objstr);
+		
+		reset();
 		String xmlString = doc.asXML();
 		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/ctrl/delete", xmlString);
+	}
+	
+	public String execute(){
+		if(bug)
+			return null;
+		if(this.serverIP == null)
+			return null;
+		if(this.appID == null)
+			return null;
+		if(this.objects == null || this.objectType == null || this.objects.size() == 0)
+			return null;
+		if(this.cmds == null || this.cmds.size() == 0)
+			return null;
+		Document doc = DocumentFactory.getInstance().createDocument();
+		Element root = doc.addElement("request");
+		Element appIdEle = root.addElement("AppID");
+		Element objTypeEle = root.addElement("ObjectType");
+		Element objEle = root.addElement("Objects");
+		appIdEle.addText(this.appID);
+		objTypeEle.addText(this.objectType);
+		String objstr = this.objects.get(0);
+		for(int oi = 1 ; oi<this.objects.size() ; oi++)
+			objstr += ("||" + this.objects.get(oi));
+		objEle.addText(objstr);
+		if(!this.logOn){
+			Element logEle = root.addElement("Log");
+			logEle.addText("false");
+		}
+		Element cmdsEle = root.addElement("CMDs");
+		for(int ci = 0 ; ci<cmds.size() ; ci++){
+			Element cmdEle = cmdsEle.addElement("CMD"+ci);
+			cmdEle.addText(cmds.get(ci));
+		}
+		reset();
+			
+		String xmlString = doc.asXML();
+		System.out.println(xmlString);
+		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/ctrl/execute/cmd", xmlString);
 	}
 	
 	public boolean checkExeStatus(String exeID){
@@ -187,6 +246,42 @@ public class CtrlAgent {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("appid", appID);
 		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/ctrl/delete/all", params);
+	}
+	
+	////timeOut in seconds
+	public boolean waitInfras(String exeID, int timeOut){
+		if(this.serverIP == null)
+			return false;
+		if(this.appID == null)
+			return false;
+		if(exeID == null)
+			return false;
+		int count = 0;
+		while(true){
+			try {
+				if( this.checkExeStatus(exeID) )
+					return true;
+				count++;
+				if(count*2 > timeOut)
+					return false;
+
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+		
+	}
+	
+	private void reset(){
+		bug = false;
+		logOn = true;
+		objectType = null;
+		if(objects != null)
+			objects.clear();
+		if(cmds != null)
+			cmds.clear();
 	}
 	
 	

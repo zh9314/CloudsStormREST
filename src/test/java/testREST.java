@@ -13,18 +13,32 @@ import basic.RESTRequest;
 public class testREST {
 
 	public static void main(String[] args) {
-		/*Map<String, String> params = new HashMap<String, String>();
-		params.put("appid", "123");
-		String ret = RESTRequest.get("145.100.133.145", 8080, "CloudsStormCA/ctrl/execute", params);
-		System.out.println(ret);*/
 		CtrlAgent ctrlAgent = new CtrlAgent();
-		String ret ;
-		if( ( ret = ctrlAgent.init("145.100.133.145").setObjType("subTopology").addObjet("data_src_2").provision() ) == null ){
+		String exeID ;
+		if( ( exeID = ctrlAgent.init("145.100.133.145").setObjType("VM")
+					.addObjet("hadoop_3nodes_1.Node1")
+					.addObjet("hadoop_3nodes_1.Node2")
+					.addObjet("hadoop_3nodes_1.Node3")
+					.addCMD("/root/hadoop/sbin/hadoop-daemon.sh stop datanode")
+					.addCMD("/root/hadoop/sbin/yarn-daemon.sh stop nodemanager").execute() ) == null ){
+		System.out.println("Infrastructure code is not executed properly!");
+		return ;
+		}
+		System.out.println("'exeid' = "+exeID);
+		if(ctrlAgent.waitInfras(exeID, 400))
+			System.out.println("CMDs Finished!");
+		else
+			System.out.println("CMDs Failed!");
+		/*if( ( exeID = ctrlAgent.init("145.100.133.145").setObjType("subTopology").addObjet("data_src_2").provision() ) == null ){
 			System.out.println("Infrastructure code is not executed properly!");
 			return ;
 		}
-		System.out.println(ret);
-		/*if( ctrlAgent.init("145.100.133.145").checkExeStatus("0") )
+		System.out.println(exeID);
+		if(ctrlAgent.waitInfras(exeID, 300))
+			System.out.println("Finished!");
+		else
+			System.out.println("Failed!");*/
+		/*if( ctrlAgent.init("145.100.133.145").checkExeStatus("1534075474574") )
 			System.out.println("Success");
 		else 
 			System.out.println("Fail");*/

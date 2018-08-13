@@ -54,7 +54,6 @@ public class RESTRequest {
 			
 			conn.disconnect();
 		}catch (IOException e){
-			e.printStackTrace();
 			System.out.println(e.getMessage());
 			return null;
 		}
@@ -101,6 +100,7 @@ public class RESTRequest {
 				String line;
 				while ((line = br.readLine()) != null) 
 					output += line + "\n";
+				
 			}
 			
 			conn.disconnect();
