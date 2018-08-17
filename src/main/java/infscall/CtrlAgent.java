@@ -117,7 +117,7 @@ public class CtrlAgent {
 			return null;
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("appid", this.appID);
-		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/ctrl/execute", params);
+		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/rest/ctrl/execute", params);
 	}
 	
 	public String provision(){
@@ -144,7 +144,7 @@ public class CtrlAgent {
 		reset();
 		String xmlString = doc.asXML();
 		System.out.println(xmlString);
-		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/ctrl/provision", xmlString);
+		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/rest/ctrl/provision", xmlString);
 	}
 	
 	public String delete(){
@@ -170,7 +170,7 @@ public class CtrlAgent {
 		
 		reset();
 		String xmlString = doc.asXML();
-		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/ctrl/delete", xmlString);
+		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/rest/ctrl/delete", xmlString);
 	}
 	
 	public String execute(){
@@ -208,7 +208,7 @@ public class CtrlAgent {
 			
 		String xmlString = doc.asXML();
 		System.out.println(xmlString);
-		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/ctrl/execute/cmd", xmlString);
+		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/rest/ctrl/execute/cmd", xmlString);
 	}
 	
 	public boolean checkExeStatus(String exeID){
@@ -217,7 +217,7 @@ public class CtrlAgent {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("exeid", exeID);
 		params.put("appid", appID);
-		String ret = RESTRequest.get(serverIP, 8080, "CloudsStormCA/ctrl/check", params);
+		String ret = RESTRequest.get(serverIP, 8080, "CloudsStormCA/rest/ctrl/check", params);
 		if(ret == null)
 			return false;
 		else 
@@ -233,7 +233,7 @@ public class CtrlAgent {
 			return null;
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("appid", appID);
-		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/ctrl/delete/ctrl", params);
+		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/rest/ctrl/delete/ctrl", params);
 	}
 	
 	public String deleteAll(){
@@ -245,7 +245,7 @@ public class CtrlAgent {
 			return null;
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("appid", appID);
-		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/ctrl/delete/all", params);
+		return RESTRequest.get(serverIP, 8080, "CloudsStormCA/rest/ctrl/delete/all", params);
 	}
 	
 	////timeOut in seconds
@@ -305,7 +305,7 @@ public class CtrlAgent {
 	
 	
 	private boolean test(){
-		String ret = RESTRequest.get(serverIP, 8080, "CloudsStormCA/ctrl/test", null);
+		String ret = RESTRequest.get(serverIP, 8080, "CloudsStormCA/rest/ctrl/test", null);
 		if(ret == null)
 			return false;
 		else
