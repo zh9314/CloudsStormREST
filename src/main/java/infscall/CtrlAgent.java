@@ -31,6 +31,8 @@ public class CtrlAgent {
 	
 	private ArrayList<String> cmds = null;
 	
+	private ArrayList<HScalingRequest> hRequests = null;
+	
 	public CtrlAgent init(String serverIP){
 		if(serverIP == null || serverIP.trim().equals("")){
 			bug = true;
@@ -105,6 +107,13 @@ public class CtrlAgent {
 		if(cmds == null)
 			cmds = new ArrayList<String>();
 		cmds.add(cmd.trim());
+		return this;
+	}
+	
+	public CtrlAgent addHScalingReq(HScalingRequest newReq){
+		if(hRequests == null)
+			hRequests = new ArrayList<HScalingRequest>();
+		hRequests.add(newReq);
 		return this;
 	}
 	
@@ -211,6 +220,53 @@ public class CtrlAgent {
 		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/rest/ctrl/execute/cmd", xmlString);
 	}
 	
+	public String hscale(){
+		if(bug)
+			return null;
+		if(this.serverIP == null)
+			return null;
+		if(this.appID == null)
+			return null;
+		if(this.hRequests == null || this.hRequests.size() == 0)
+			return null;
+		
+		Document doc = DocumentFactory.getInstance().createDocument();
+		Element root = doc.addElement("request");
+		Element appIdEle = root.addElement("AppID");
+		appIdEle.addText(this.appID);
+		
+		Element reqsEle = root.addElement("ScaleReq");
+		for(int ri = 0 ; ri < hRequests.size() ; ri++){
+			HScalingRequest curReq = hRequests.get(ri);
+			Element reqEle = reqsEle.addElement("ScaleReq"+ri);
+			Element objTypeEle = reqEle.addElement("ObjectType");
+			objTypeEle.addText(curReq.targetObjectType);
+			Element objsEle = reqEle.addElement("Objects");
+			objsEle.addText(curReq.targetObjects);
+			if(curReq.cloudProvider != null){
+				Element cpEle = reqEle.addElement("CP");
+				cpEle.addText(curReq.cloudProvider);
+			}
+			if(curReq.dataCentre != null){
+				Element dcEle = reqEle.addElement("DC");
+				dcEle.addText(curReq.dataCentre);
+			}
+			if(curReq.scaledSTName != null){
+				Element nameEle = reqEle.addElement("ScaledSTName");
+				nameEle.addText(curReq.scaledSTName);
+			}
+			if(curReq.scalingDirection != null){
+				Element sdEle = reqEle.addElement("OutIn");
+				sdEle.addText(curReq.scalingDirection);
+			}
+		}
+		reset();
+		
+		String xmlString = doc.asXML();
+		System.out.println(xmlString);
+		return RESTRequest.postXML(serverIP, 8080, "CloudsStormCA/rest/ctrl/hscale", xmlString);
+	}
+	
 	public boolean checkExeStatus(String exeID){
 		if(this.appID == null)
 			return false;
@@ -282,6 +338,8 @@ public class CtrlAgent {
 			objects.clear();
 		if(cmds != null)
 			cmds.clear();
+		if(hRequests != null)
+			hRequests.clear();
 	}
 	
 	
